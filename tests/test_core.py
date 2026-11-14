@@ -244,3 +244,11 @@ def test_bardhaman_story_bablu_old_sticker_and_new_badge(db):
     rows = core.find_providers(con, "bardhaman", women_run=True)
     assert [r["name"] for r in rows] == ["Mina Pal Homestay"]
     assert core.verify_before_pay(con, "mina.pal@upi")["result"] == "verified_provider"
+
+
+def test_verify_accepts_badge_codes(db):
+    con, _ = db
+    r = core.verify_before_pay(con, "bdn-0108")
+    assert r["result"] == "badge" and r["provider"] == "Bhola Das" and r["badge_token"] == core.badge_url_token("BDN-0108") and core.provider_card(con, r["badge_token"])["ok"]
+    assert core.verify_before_pay(con, "BDN 0150")["result"] == "badge_revoked"
+    assert core.verify_before_pay(con, "BDN-9999")["result"] == "badge_unknown"

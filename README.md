@@ -108,6 +108,11 @@ Full steps in Bengali: [`docs/GO_LIVE_bn.md`](docs/GO_LIVE_bn.md). Never commit 
 
 ## Changelog
 
+**v0.15.1 (14 Nov 2026), badge codes on the check screen**
+- "Check before you pay" now understands a badge code typed by hand (e.g. `BDN-0108`, `bdn 0108`): it says whose badge it is and opens the card;
+  a withdrawn or unknown code gets a clear "do not use" with a fake-badge report button. WhatsApp answers a code the same way.
+- The box shows examples of what can be checked: a UPI ID, a phone number, a badge code or a link.
+
 **v0.15 (14 Nov 2026), short, easy sign-in codes**
 - Pathik Mitra and district-team codes can now be short and easy to remember: after 8 wrong codes from one address in 15 minutes,
   that address waits 15 minutes (the screen says so in Bengali, Hindi and English). Codes are compared in constant time.

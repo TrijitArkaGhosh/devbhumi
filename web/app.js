@@ -366,7 +366,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
 
   function verify() {
     view('<h1>' + esc(t('verify_title')) + '</h1><p class="muted">' + esc(t('verify_sub')) + '</p><form id="vf"><label for="vq">' + esc(t('verify_label')) + '</label>' +
-      '<input id="vq" type="text" autocomplete="off" inputmode="url"><button class="btn green" style="width:100%;margin-top:12px">' + esc(t('verify_btn')) + '</button></form><div id="vr" aria-live="polite"></div>' +
+      '<input id="vq" type="text" autocomplete="off" autocapitalize="off" placeholder="' + esc(t('verify_placeholder')) + '"><button class="btn green" style="width:100%;margin-top:12px">' + esc(t('verify_btn')) + '</button></form><div id="vr" aria-live="polite"></div>' +
       '<p class="muted small" style="margin-top:14px">' + esc(t('no_otp')) + '</p>');
     document.getElementById('vf').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -376,6 +376,18 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       api('/api/verify-pay', { method: 'POST', body: { query: q } }).then(function (r) {
         if (!r.ok) { out.innerHTML = '<p class="note warn" style="margin:12px 0 0">' + esc(t(r.offline || !r.data || r.data.detail === 'offline' ? 'send_failed' : 'verify_empty')) + '</p>'; return; }
         var d = r.data, map = { official: ['r-ok', 'r_official', 'r_official_b', d.label], verified_provider: ['r-ok', 'r_match', 'r_match_b', d.provider], not_official: ['r-bad', 'r_not_official', 'r_not_official_b'], not_confirmed: ['r-unknown', 'r_unknown', 'r_unknown_b'] };
+        if (d.result === 'badge') {   // a badge code typed by hand: show whose badge it is, and open the card
+          var ok = d.status !== 'needs_recheck';
+          out.innerHTML = '<div class="result ' + (ok ? 'r-ok' : 'r-unknown') + '"><p class="big">' + esc(t('r_badge', { code: d.code })) + '</p><p style="margin:0 0 12px">' +
+            esc(t(ok ? 'r_badge_b' : 'r_badge_recheck', { name: d.provider })) + '</p><a class="btn green" href="/b/' + esc(d.badge_token) + '" data-link>' + esc(t('r_badge_open')) + '</a></div>' +
+            '<p class="muted small" style="margin-top:10px">' + esc(t('r_badge_tip')) + '</p>';
+          return;
+        }
+        if (d.result === 'badge_unknown' || d.result === 'badge_revoked') {
+          out.innerHTML = '<div class="result r-bad"><p class="big">' + esc(t(d.result === 'badge_unknown' ? 'r_badge_unknown' : 'r_badge_revoked', { code: d.code })) + '</p><p style="margin:0">' + esc(t('r_badge_bad_b')) + '</p></div>' +
+            '<a class="btn ghost" href="#/report-fake" style="margin-top:12px">' + esc(t('report_fake')) + '</a>';
+          return;
+        }
         var m = map[d.result]; if (!m) return;
         document.getElementById('vr').innerHTML = '<div class="result ' + m[0] + '"><p class="big">' + esc(t(m[1])) + '</p><p style="margin:0">' + esc(t(m[2], { name: m[3] || '' })) + '</p></div>';
       });
@@ -439,7 +451,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       '<h2>' + esc(t('set_language')) + '</h2><div class="seg" role="group" aria-label="' + esc(t('set_language')) + '">' +
       [['bn', 'বাংলা'], ['hi', 'हिंदी'], ['en', 'English']].map(function (l) { return '<button data-setlang="' + l[0] + '" lang="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '">' + l[1] + '</button>'; }).join('') + '</div>' +
       '<h2>' + esc(t('set_display')) + '</h2><div class="list">' + sw('lg', large, 'large_text') + sw('hc', con, 'high_contrast') + '</div>' +
-      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.15</span>' +
+      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.15.1</span>' +
       '<p class="muted small" style="margin:8px 0 0">' + esc(t('about_sample')) + '</p></div></div>');
     document.getElementById('lg').addEventListener('click', function () { store('db_large', large ? '0' : '1'); applyPrefs(); settings(); });
     document.getElementById('hc').addEventListener('click', function () { store('db_contrast', con ? '0' : '1'); applyPrefs(); settings(); });

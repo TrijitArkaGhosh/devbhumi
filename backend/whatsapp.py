@@ -148,6 +148,10 @@ def verify_reply(con, lang, query):
     d = core.verify_before_pay(con, query)
     if not d.get("ok"):
         return [msg(t(lang, "verify_ask"))]
+    if d["result"] == "badge":   # a badge code: answer with the provider card itself
+        return card_reply(con, lang, d["badge_token"])
+    if d["result"] in ("badge_unknown", "badge_revoked"):
+        return [msg(t(lang, "r_not_official"))]
     key = {"official": "r_official", "verified_provider": "r_match", "not_official": "r_not_official"}.get(d["result"], "r_not_confirmed")
     return [msg(t(lang, key, label=d.get("label", ""), name=d.get("provider", "")))]
 

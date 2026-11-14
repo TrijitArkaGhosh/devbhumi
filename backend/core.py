@@ -250,6 +250,16 @@ def verify_before_pay(con, query):
     q = (query or "").strip().lower()
     if not q:
         return {"ok": False, "error": "empty"}
+    code = re.fullmatch(r"([a-z]{3})\s*-?\s*(\d{4})", q)   # a badge code typed by hand, e.g. BDN-0108
+    if code:
+        c = f"{code.group(1).upper()}-{code.group(2)}"
+        row = con.execute("SELECT b.status, p.id, p.display_name FROM badges b JOIN providers p ON p.id=b.provider_id WHERE b.code=?", (c,)).fetchone()
+        if not row:
+            return {"ok": True, "result": "badge_unknown", "code": c}
+        if row["status"] != "active":
+            return {"ok": True, "result": "badge_revoked", "code": c, "provider": row["display_name"]}
+        return {"ok": True, "result": "badge", "code": c, "provider": row["display_name"], "status": badge_status(con, row["id"]),
+                "badge_token": badge_url_token(c)}
     upi = re.search(r"[a-z0-9._-]+@[a-z][a-z0-9]{1,}", q)   # people forward whole messages, so pull the UPI ID out
     if upi and not re.search(r"https?://", q):
         q = upi.group(0)

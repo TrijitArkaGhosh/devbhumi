@@ -217,3 +217,22 @@
   };
   Object.keys(X).forEach(function (l) { Object.keys(X[l]).forEach(function (k) { I18N[l][k] = X[l][k]; }); });
 })();
+
+/* v0.15.1: badge codes on the check screen. */
+(function () {
+  var X = {
+    en: { verify_placeholder: 'e.g. bhola.das@upi · 98xxxxxxxx · BDN-0108 · a link', r_badge: 'Badge {code} is in our register', r_badge_b: 'It belongs to {name}. Open the card to see their own price, rating and last check.',
+      r_badge_recheck: 'It belongs to {name}, but their re-check is due. Agree the price first.', r_badge_open: 'Open the provider card',
+      r_badge_tip: 'A code can be copied onto a fake sticker. Scanning the badge is safer: the scan proves the badge is genuine.',
+      r_badge_unknown: 'Badge {code} is not in our register', r_badge_revoked: 'Badge {code} has been withdrawn', r_badge_bad_b: 'Do not use this provider or pay through them. Please tell us where you saw it.' },
+    hi: { verify_placeholder: 'जैसे bhola.das@upi · 98xxxxxxxx · BDN-0108 · कोई लिंक', r_badge: 'बैज {code} हमारे रजिस्टर में है', r_badge_b: 'यह {name} का है। उनका अपना दाम, रेटिंग और आख़िरी जाँच देखने के लिए कार्ड खोलें।',
+      r_badge_recheck: 'यह {name} का है, पर उनकी दोबारा जाँच बाकी है। पहले दाम तय कर लें।', r_badge_open: 'सेवा प्रदाता का कार्ड खोलें',
+      r_badge_tip: 'कोड नकली स्टिकर पर भी लिखा जा सकता है। बैज स्कैन करना ज़्यादा सुरक्षित है: स्कैन से पता चलता है कि बैज असली है।',
+      r_badge_unknown: 'बैज {code} हमारे रजिस्टर में नहीं है', r_badge_revoked: 'बैज {code} वापस ले लिया गया है', r_badge_bad_b: 'इस सेवा प्रदाता का उपयोग न करें, न ही उनके ज़रिए पैसे दें। कहाँ देखा, हमें बताएँ।' },
+    bn: { verify_placeholder: 'যেমন bhola.das@upi · 98xxxxxxxx · BDN-0108 · কোনো লিংক', r_badge: 'ব্যাজ {code} আমাদের রেজিস্টারে আছে', r_badge_b: 'এটা {name}-এর। নিজের দাম, রেটিং আর শেষ যাচাই দেখতে কার্ড খুলুন।',
+      r_badge_recheck: 'এটা {name}-এর, তবে আবার যাচাই বাকি। আগে দাম ঠিক করে নিন।', r_badge_open: 'পরিষেবাদাতার কার্ড খুলুন',
+      r_badge_tip: 'কোড নকল স্টিকারেও লেখা যায়। ব্যাজ স্ক্যান করা বেশি নিরাপদ: স্ক্যানেই বোঝা যায় ব্যাজটা আসল।',
+      r_badge_unknown: 'ব্যাজ {code} আমাদের রেজিস্টারে নেই', r_badge_revoked: 'ব্যাজ {code} বাতিল করা হয়েছে', r_badge_bad_b: 'এই পরিষেবাদাতাকে ব্যবহার করবেন না, এঁর মাধ্যমে টাকাও দেবেন না। কোথায় দেখেছেন আমাদের জানান।' }
+  };
+  Object.keys(X).forEach(function (l) { Object.keys(X[l]).forEach(function (k) { I18N[l][k] = X[l][k]; }); });
+})();
