@@ -252,3 +252,9 @@ def test_verify_accepts_badge_codes(db):
     assert r["result"] == "badge" and r["provider"] == "Bhola Das" and r["badge_token"] == core.badge_url_token("BDN-0108") and core.provider_card(con, r["badge_token"])["ok"]
     assert core.verify_before_pay(con, "BDN 0150")["result"] == "badge_revoked"
     assert core.verify_before_pay(con, "BDN-9999")["result"] == "badge_unknown"
+
+
+def test_wbtdcl_portal_is_official(db):
+    con, _ = db
+    assert core.verify_before_pay(con, "https://wbtdcl.wb.gov.in/rooms")["result"] == "official"
+    assert core.verify_before_pay(con, "wbtdc-rooms-booking.in")["result"] == "not_official"   # look-alike

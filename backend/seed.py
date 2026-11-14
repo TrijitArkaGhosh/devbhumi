@@ -102,7 +102,7 @@ def seed(con):
                     (site, kind, bn, hi, en, lat, lon, phone, hours, "sample: confirm location and hours before launch", ago(5)))
     con.executemany("INSERT INTO official_links VALUES (?,?,?)", [
         ("visitmayapur.com", "ISKCON Mayapur accommodation", "DPR v9.4 official links list"),
-        ("wbtdc.gov.in", "West Bengal Tourism Development Corporation", "DPR v9.4 official links list"),
+        ("wbtdcl.wb.gov.in", "West Bengal Tourism Development Corporation (WBTDCL)", "official WBTDCL booking portal, checked 14 Nov 2026"),
         ("wbtourism.gov.in", "West Bengal Tourism", "DPR v9.4 official links list"),
         ("irctc.co.in", "IRCTC", "DPR v9.4 official links list"),
     ])

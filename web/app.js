@@ -451,7 +451,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       '<h2>' + esc(t('set_language')) + '</h2><div class="seg" role="group" aria-label="' + esc(t('set_language')) + '">' +
       [['bn', 'বাংলা'], ['hi', 'हिंदी'], ['en', 'English']].map(function (l) { return '<button data-setlang="' + l[0] + '" lang="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '">' + l[1] + '</button>'; }).join('') + '</div>' +
       '<h2>' + esc(t('set_display')) + '</h2><div class="list">' + sw('lg', large, 'large_text') + sw('hc', con, 'high_contrast') + '</div>' +
-      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.15.1</span>' +
+      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.15.2</span>' +
       '<p class="muted small" style="margin:8px 0 0">' + esc(t('about_sample')) + '</p></div></div>');
     document.getElementById('lg').addEventListener('click', function () { store('db_large', large ? '0' : '1'); applyPrefs(); settings(); });
     document.getElementById('hc').addEventListener('click', function () { store('db_contrast', con ? '0' : '1'); applyPrefs(); settings(); });

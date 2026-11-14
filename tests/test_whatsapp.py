@@ -80,7 +80,7 @@ def test_menu_options(db):
     assert "112" in help_ and "Burdwan Medical College" in help_
     assert "Send or forward" in all_text(say(con, "4", who=w))
     assert "Official site" in all_text(say(con, "visitmayapur.com", who=w))
-    assert "https://wbtdc.gov.in" in all_text(say(con, "5", who=w))
+    assert "https://wbtdcl.wb.gov.in" in all_text(say(con, "5", who=w))
     assert "women-run" in all_text(say(con, "sakhi", who=w)).lower()
 
 

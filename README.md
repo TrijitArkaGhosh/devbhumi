@@ -108,6 +108,10 @@ Full steps in Bengali: [`docs/GO_LIVE_bn.md`](docs/GO_LIVE_bn.md). Never commit 
 
 ## Changelog
 
+**v0.15.2 (14 Nov 2026), correct WBTDC address**
+- The official-sites card and "Check before you pay" now use the working WBTDCL booking portal, `wbtdcl.wb.gov.in`
+  (the old `wbtdc.gov.in` no longer opens). Look-alike addresses containing "wbtdc" are still flagged.
+
 **v0.15.1 (14 Nov 2026), badge codes on the check screen**
 - "Check before you pay" now understands a badge code typed by hand (e.g. `BDN-0108`, `bdn 0108`): it says whose badge it is and opens the card;
   a withdrawn or unknown code gets a clear "do not use" with a fake-badge report button. WhatsApp answers a code the same way.
