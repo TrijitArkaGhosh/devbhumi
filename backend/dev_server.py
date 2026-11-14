@@ -6,6 +6,9 @@
 Use it for the jury demo on any laptop. Use app.py (FastAPI) in production.
 """
 import argparse
+import hmac
+import threading
+import time
 import json
 import mimetypes
 import os
@@ -23,13 +26,56 @@ WA_NUMBER = os.environ.get("DEVBHUMI_WA_NUMBER", "")
 # Live site: set DEVBHUMI_DEMO_HINTS=0 so the sign-in screens stop showing the demo codes.
 DEMO_HINTS = os.environ.get("DEVBHUMI_DEMO_HINTS", "1") != "0"
 INTERPRETER_PHONE = os.environ.get("DEVBHUMI_INTERPRETER_PHONE", "")
-VERSION = "0.14.1"
+VERSION = "0.15.0"
+# Sign-in codes can be short and easy to remember because wrong guesses are limited:
+# after 8 wrong codes from one address in 15 minutes, that address must wait 15 minutes.
+FAIL_LIMIT, FAIL_WINDOW = 8, 15 * 60
+_fails, _fails_lock = {}, threading.Lock()
+
+
+def _same(a, b):
+    return bool(a) and bool(b) and hmac.compare_digest(str(a).encode(), str(b).encode())
 
 
 def make_app(con):
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
+
+        def _client(self):
+            # behind the host's proxy: the address Cloudflare saw, else the one the last proxy added (a visitor cannot forge either)
+            cf = (self.headers.get("CF-Connecting-IP") or "").strip()
+            fwd = [x.strip() for x in (self.headers.get("X-Forwarded-For") or "").split(",") if x.strip()]
+            return cf or (fwd[-1] if fwd else self.client_address[0])
+
+        def _locked_out(self):
+            now = time.time()
+            with _fails_lock:
+                hits = [t for t in _fails.get(self._client(), []) if now - t < FAIL_WINDOW]
+                _fails[self._client()] = hits
+                return len(hits) >= FAIL_LIMIT
+
+        def _failed(self):
+            with _fails_lock:
+                _fails.setdefault(self._client(), []).append(time.time())
+
+        def _mitra(self):
+            """The signed-in Pathik Mitra, or an error tuple (code, body)."""
+            if self._locked_out():
+                return None, (429, {"detail": "too_many_attempts"})
+            mi = core.mitra_from_token(con, self._bearer())
+            if not mi:
+                self._failed()
+                return None, (401, {"detail": "mitra_token_required"})
+            return mi, None
+
+        def _admin_error(self):
+            if self._locked_out():
+                return 429, {"detail": "too_many_attempts"}
+            if not _same(self._bearer(), ADMIN_TOKEN):
+                self._failed()
+                return 401, {"detail": "admin_token_required"}
+            return None
 
         def _public_base(self):
             """Address for links in replies: the configured live address, else the one the visitor used (https behind a proxy)."""
@@ -120,11 +166,12 @@ def make_app(con):
             if m:
                 return self._json(core.complaint_status(con, int(m.group(1))), 404)
             if p == "/api/mitra/queue":
-                mi = core.mitra_from_token(con, self._bearer())
-                return self._json(core.mitra_queue(con, mi)) if mi else self._send(401, {"detail": "mitra_token_required"})
+                mi, err = self._mitra()
+                return self._json(core.mitra_queue(con, mi)) if mi else self._send(*err)
             if p.startswith("/api/admin/"):
-                if self._bearer() != ADMIN_TOKEN:
-                    return self._send(401, {"detail": "admin_token_required"})
+                err = self._admin_error()
+                if err:
+                    return self._send(*err)
                 if p == "/api/admin/footfall":
                     return self._json(core.footfall(con, q.get("site", "bardhaman"), q.get("day", core.iso(core.now())[:10])))
                 if p == "/api/admin/badges":
@@ -164,17 +211,18 @@ def make_app(con):
                 whatsapp.send(bodies)
                 return self._json({"ok": True, "replies": len(bodies)})
             if p.startswith("/api/mitra/"):
-                mi = core.mitra_from_token(con, self._bearer())
+                mi, err = self._mitra()
                 if not mi:
-                    return self._send(401, {"detail": "mitra_token_required"})
+                    return self._send(*err)
                 if p == "/api/mitra/verifications" and isinstance(b, list):
                     return self._json(core.submit_verifications(con, mi, b))
                 if p == "/api/mitra/badges":
                     return self._json(core.link_badge(con, mi, b.get("provider_id"), b.get("code")))
             m = re.fullmatch(r"/api/admin/badges/([A-Z]{3}-\d{4})/revoke", p)
             if m:
-                if self._bearer() != ADMIN_TOKEN:
-                    return self._send(401, {"detail": "admin_token_required"})
+                err = self._admin_error()
+                if err:
+                    return self._send(*err)
                 return self._json(core.revoke_badge(con, "admin", m.group(1), b.get("reason", "")), 404)
             return self._send(404, {"detail": "not_found"})
 
@@ -182,7 +230,7 @@ def make_app(con):
             p = urlparse(self.path).path
             b = self._body() or {}
             m = re.fullmatch(r"/api/admin/complaints/(\d+)", p)
-            if m and self._bearer() == ADMIN_TOKEN:
+            if m and not self._admin_error():
                 return self._json(core.set_complaint(con, "admin", int(m.group(1)), b.get("status"), b.get("validated")))
             return self._send(401 if m else 404, {"detail": "admin_token_required" if m else "not_found"})
 

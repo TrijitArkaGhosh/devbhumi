@@ -439,7 +439,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       '<h2>' + esc(t('set_language')) + '</h2><div class="seg" role="group" aria-label="' + esc(t('set_language')) + '">' +
       [['bn', 'বাংলা'], ['hi', 'हिंदी'], ['en', 'English']].map(function (l) { return '<button data-setlang="' + l[0] + '" lang="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '">' + l[1] + '</button>'; }).join('') + '</div>' +
       '<h2>' + esc(t('set_display')) + '</h2><div class="list">' + sw('lg', large, 'large_text') + sw('hc', con, 'high_contrast') + '</div>' +
-      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.14.1</span>' +
+      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.15</span>' +
       '<p class="muted small" style="margin:8px 0 0">' + esc(t('about_sample')) + '</p></div></div>');
     document.getElementById('lg').addEventListener('click', function () { store('db_large', large ? '0' : '1'); applyPrefs(); settings(); });
     document.getElementById('hc').addEventListener('click', function () { store('db_contrast', con ? '0' : '1'); applyPrefs(); settings(); });
@@ -534,7 +534,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
   function outbox(v) { if (v !== undefined) store('db_outbox', JSON.stringify(v)); try { return JSON.parse(store('db_outbox') || '[]'); } catch (e) { return []; } }
   function mitraLogin(err) {
     view('<h1>' + esc(t('mitra_title')) + '</h1><p class="muted">' + esc(t('mitra_note')) + '</p><form id="ml"><label for="mt">' + esc(t('mitra_token')) + '</label>' +
-      '<input id="mt" type="text" autocomplete="off" spellcheck="false"><p class="muted small">' + esc(t(CONFIG.demoHints ? 'mitra_token_hint' : 'mitra_token_hint_live')) + '</p>' + (err ? '<p class="note warn" style="margin:0 0 10px">' + esc(t('mitra_bad_token')) + '</p>' : '') +
+      '<input id="mt" type="text" autocomplete="off" spellcheck="false"><p class="muted small">' + esc(t(CONFIG.demoHints ? 'mitra_token_hint' : 'mitra_token_hint_live')) + '</p>' + (err ? '<p class="note warn" style="margin:0 0 10px">' + esc(t(err === 'busy' ? 'too_many' : 'mitra_bad_token')) + '</p>' : '') +
       '<button class="btn green" style="width:100%">' + esc(t('mitra_signin')) + '</button></form>');
     document.getElementById('ml').addEventListener('submit', function (e) { e.preventDefault(); store('db_mitra_token', document.getElementById('mt').value.trim()); mitra(); });
   }
@@ -542,7 +542,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
     if (!store('db_mitra_token')) return mitraLogin(false);
     loading();
     mitraApi('/api/mitra/queue').then(function (r) {
-      if (r.status === 401) { store('db_mitra_token', ''); return mitraLogin(true); }
+      if (r.status === 401 || r.status === 429) { store('db_mitra_token', ''); return mitraLogin(r.status === 429 ? 'busy' : true); }
       S.mq = r.data; store('db_mq', JSON.stringify(r.data)); drawQueue(false);
     }).catch(function () { try { S.mq = JSON.parse(store('db_mq') || '[]'); } catch (e) { S.mq = []; } drawQueue(true); });
   }
@@ -644,13 +644,13 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
     if (!store('db_admin_token')) {
       view('<h1>' + esc(t('badges_title')) + '</h1><p class="muted">' + esc(t('badges_sub')) + '</p><form id="al"><label for="at">' + esc(t('admin_token')) + '</label>' +
         '<input id="at" type="text" autocomplete="off" spellcheck="false"><p class="muted small">' + esc(t(CONFIG.demoHints ? 'admin_hint' : 'admin_hint_live')) + '</p>' +
-        (err ? '<p class="note warn" style="margin:0 0 10px">' + esc(t('mitra_bad_token')) + '</p>' : '') + '<button class="btn green" style="width:100%">' + esc(t('mitra_signin')) + '</button></form>');
+        (err ? '<p class="note warn" style="margin:0 0 10px">' + esc(t(err === 'busy' ? 'too_many' : 'mitra_bad_token')) + '</p>' : '') + '<button class="btn green" style="width:100%">' + esc(t('mitra_signin')) + '</button></form>');
       document.getElementById('al').addEventListener('submit', function (e) { e.preventDefault(); store('db_admin_token', document.getElementById('at').value.trim()); badgesPage(); });
       return;
     }
     loading();
     fetch('/api/admin/badges', { headers: { Authorization: 'Bearer ' + store('db_admin_token') } }).then(function (r) {
-      if (r.status === 401) { store('db_admin_token', ''); return badgesPage(true); }
+      if (r.status === 401 || r.status === 429) { store('db_admin_token', ''); return badgesPage(r.status === 429 ? 'busy' : true); }
       return r.json().then(drawBadges);
     }).catch(function () { view('<p class="note">' + esc(t('error_net')) + '</p>'); });
   }

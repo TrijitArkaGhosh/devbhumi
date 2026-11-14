@@ -108,6 +108,11 @@ Full steps in Bengali: [`docs/GO_LIVE_bn.md`](docs/GO_LIVE_bn.md). Never commit 
 
 ## Changelog
 
+**v0.15 (14 Nov 2026), short, easy sign-in codes**
+- Pathik Mitra and district-team codes can now be short and easy to remember: after 8 wrong codes from one address in 15 minutes,
+  that address waits 15 minutes (the screen says so in Bengali, Hindi and English). Codes are compared in constant time.
+- To change a code: Render → devbhumi → Environment → edit `MITRA_TOKEN_BARDHAMAN`, `MITRA_TOKEN_KALNA` or `ADMIN_TOKEN` → Save, rebuild and deploy.
+
 **v0.14.1 (14 Nov 2026), live on Render**
 - Live at https://devbhumi-74mh.onrender.com (Render free plan, kept awake by a 10-minute ping to `/healthz`).
 - Fix: links in WhatsApp replies now use the live https address (from `DEVBHUMI_BASE_URL`, or `X-Forwarded-Proto` behind the host's proxy) instead of `http://`.

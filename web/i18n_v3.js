@@ -207,3 +207,13 @@
   };
   Object.keys(X).forEach(function (l) { Object.keys(X[l]).forEach(function (k) { I18N[l][k] = X[l][k]; }); });
 })();
+
+/* v0.15: too many wrong sign-in codes. */
+(function () {
+  var X = {
+    en: { too_many: 'Too many wrong codes. Please wait 15 minutes and try again.' },
+    hi: { too_many: 'बहुत बार गलत कोड डाला गया। 15 मिनट बाद फिर से कोशिश करें।' },
+    bn: { too_many: 'অনেকবার ভুল কোড দেওয়া হয়েছে। ১৫ মিনিট পরে আবার চেষ্টা করুন।' }
+  };
+  Object.keys(X).forEach(function (l) { Object.keys(X[l]).forEach(function (k) { I18N[l][k] = X[l][k]; }); });
+})();

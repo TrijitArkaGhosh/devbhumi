@@ -70,7 +70,7 @@ def test_whatsapp_simulator_and_new_public_routes(srv):
     r = json.loads(body)["replies"]
     assert code == 200 and "Lakshmi Das Homestay" in r[0]["text"] and len(r[0]["buttons"]) == 3
     assert json.loads(call(f"{base}/api/official")[1])[0]["domain"] == "visitmayapur.com"
-    assert json.loads(call(f"{base}/api/config")[1])["version"] == "0.14.1"
+    assert json.loads(call(f"{base}/api/config")[1])["version"] == "0.15.0"
     code, body, _ = call(f"{base}/api/fake-reports", "POST", {"code_seen": "KLN-0142.000000000000", "text": "x"})
     assert code == 200 and json.loads(body)["report_id"] >= 1
     led = json.loads(call(f"{base}/api/ledger?site=kalna")[1])
@@ -117,3 +117,17 @@ def test_simulator_links_use_https_behind_proxy(srv):
                                  headers={"Content-Type": "application/json", "X-Forwarded-Proto": "https"}, method="POST")
     text = json.loads(urllib.request.urlopen(req).read())["replies"][0]["text"]
     assert "https://" in text and "http://" not in text
+
+
+def test_wrong_sign_in_codes_are_limited(srv):
+    import urllib.error, urllib.request
+    base, _ = srv
+    def queue(tok, ip):
+        req = urllib.request.Request(f"{base}/api/mitra/queue", headers={"Authorization": "Bearer " + tok, "X-Forwarded-For": ip})
+        try:
+            return urllib.request.urlopen(req).status
+        except urllib.error.HTTPError as e:
+            return e.code
+    codes = [queue("wrong-code", "203.0.113.9") for _ in range(9)]
+    assert codes[:8] == [401] * 8 and codes[8] == 429
+    assert queue("wrong-code", "203.0.113.10") == 401          # another address is not affected
