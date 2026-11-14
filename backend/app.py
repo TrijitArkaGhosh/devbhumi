@@ -27,7 +27,7 @@ WA_SIMULATOR = os.environ.get("DEVBHUMI_WA_SIMULATOR", "1") != "0"
 
 con = core.connect(DB)
 core.init_db(con)  # creates any tables a newer version added; existing data is kept
-app = FastAPI(title="DevBhumi API", version="0.15.2")
+app = FastAPI(title="DevBhumi API", version="0.16.0")
 
 
 class Rating(BaseModel):
@@ -165,14 +165,14 @@ def fake_report(r: FakeReport):
 
 @app.get("/api/config")
 def config():
-    return {"wa_number": WA_NUMBER, "wa_simulator": WA_SIMULATOR, "version": "0.15.2",
+    return {"wa_number": WA_NUMBER, "wa_simulator": WA_SIMULATOR, "version": "0.16.0",
             "demo_hints": os.environ.get("DEVBHUMI_DEMO_HINTS", "1") != "0",
             "interpreter_phone": os.environ.get("DEVBHUMI_INTERPRETER_PHONE", "")}
 
 
 @app.get("/healthz")
 def healthz():
-    return {"ok": True, "version": "0.15.2"}
+    return {"ok": True, "version": "0.16.0"}
 
 
 # WhatsApp

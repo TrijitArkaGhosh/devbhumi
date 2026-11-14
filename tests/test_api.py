@@ -70,7 +70,7 @@ def test_whatsapp_simulator_and_new_public_routes(srv):
     r = json.loads(body)["replies"]
     assert code == 200 and "Lakshmi Das Homestay" in r[0]["text"] and len(r[0]["buttons"]) == 3
     assert json.loads(call(f"{base}/api/official")[1])[0]["domain"] == "visitmayapur.com"
-    assert json.loads(call(f"{base}/api/config")[1])["version"] == "0.15.2"
+    assert json.loads(call(f"{base}/api/config")[1])["version"] == "0.16.0"
     code, body, _ = call(f"{base}/api/fake-reports", "POST", {"code_seen": "KLN-0142.000000000000", "text": "x"})
     assert code == 200 and json.loads(body)["report_id"] >= 1
     led = json.loads(call(f"{base}/api/ledger?site=kalna")[1])

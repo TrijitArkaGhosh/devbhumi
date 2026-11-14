@@ -236,3 +236,9 @@
   };
   Object.keys(X).forEach(function (l) { Object.keys(X[l]).forEach(function (k) { I18N[l][k] = X[l][k]; }); });
 })();
+
+/* v0.16: scan success. */
+(function () {
+  var X = { en: { scan_ok: 'Badge found. Opening the card…' }, hi: { scan_ok: 'बैज मिल गया। कार्ड खुल रहा है…' }, bn: { scan_ok: 'ব্যাজ পাওয়া গেছে। কার্ড খুলছে…' } };
+  Object.keys(X).forEach(function (l) { Object.keys(X[l]).forEach(function (k) { I18N[l][k] = X[l][k]; }); });
+})();

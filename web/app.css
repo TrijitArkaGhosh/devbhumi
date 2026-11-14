@@ -303,3 +303,28 @@ img, svg, video { max-width: 100%; }
 .langs { padding: 3px; }
 .langs button { height: 44px; min-width: 44px; border-radius: 22px; }
 @media (max-width: 360px) { .langs button { min-width: 40px; } }
+
+/* v0.16 scanner: a soft moving scan line, a clear success moment, a short "not a badge" flash */
+.scan-box i { transition: border-color .2s ease; }
+.scan-line { position: absolute; left: 7%; right: 7%; top: 6%; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, rgba(126, 231, 181, 0), #7EE7B5 18%, #EFFFF7 50%, #7EE7B5 82%, rgba(126, 231, 181, 0));
+  box-shadow: 0 0 10px 2px rgba(126, 231, 181, .55), 0 0 26px 6px rgba(126, 231, 181, .22);
+  animation: scanline 2.4s cubic-bezier(.45, .05, .55, .95) infinite alternate; }
+.scan-line::after { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 46px;
+  background: linear-gradient(to top, rgba(126, 231, 181, .16), rgba(126, 231, 181, 0)); pointer-events: none; }
+@keyframes scanline { from { top: 6%; } to { top: 93%; } }
+.scan-ok { position: absolute; left: 50%; top: 50%; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%;
+  display: grid; place-items: center; color: #fff; background: #1F8A5B; box-shadow: 0 0 0 10px rgba(31, 138, 91, .28), 0 8px 24px rgba(0,0,0,.35);
+  opacity: 0; transform: scale(.6); transition: opacity .18s ease, transform .28s cubic-bezier(.2, 1.4, .4, 1); }
+.scanner.ok .scan-box i { border-color: #5BE39B; }
+.scanner.ok .scan-line { opacity: 0; animation-play-state: paused; }
+.scanner.ok .scan-ok { opacity: 1; transform: scale(1); }
+.scanner.ok .scan-box { box-shadow: 0 0 0 100vmax rgba(10, 40, 28, .55); }
+.scanner.bad .scan-box i { border-color: #FF8A70; }
+.scanner.bad .scan-line { background: linear-gradient(90deg, rgba(255, 138, 112, 0), #FF8A70 30%, #FFE3DB 50%, #FF8A70 70%, rgba(255, 138, 112, 0));
+  box-shadow: 0 0 12px 2px rgba(255, 138, 112, .5); }
+.scanner.bad .scan-line::after { background: linear-gradient(to top, rgba(255, 138, 112, .14), rgba(255, 138, 112, 0)); }
+@media (prefers-reduced-motion: reduce) {
+  .scan-line { animation: none; top: 49%; opacity: .75; }
+  .scan-ok { transition: none; transform: none; }
+}

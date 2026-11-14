@@ -26,7 +26,7 @@ WA_NUMBER = os.environ.get("DEVBHUMI_WA_NUMBER", "")
 # Live site: set DEVBHUMI_DEMO_HINTS=0 so the sign-in screens stop showing the demo codes.
 DEMO_HINTS = os.environ.get("DEVBHUMI_DEMO_HINTS", "1") != "0"
 INTERPRETER_PHONE = os.environ.get("DEVBHUMI_INTERPRETER_PHONE", "")
-VERSION = "0.15.2"
+VERSION = "0.16.0"
 # Sign-in codes can be short and easy to remember because wrong guesses are limited:
 # after 8 wrong codes from one address in 15 minutes, that address must wait 15 minutes.
 FAIL_LIMIT, FAIL_WINDOW = 8, 15 * 60

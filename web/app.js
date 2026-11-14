@@ -95,7 +95,8 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       '<ul class="hero-points"><li>' + esc(t('hero_p1')) + '</li><li>' + esc(t('hero_p2')) + '</li><li>' + esc(t('hero_p3')) + '</li></ul></section>' +
       '<p class="muted small" id="scanmsg" aria-live="polite"></p>' +
       '<div class="scanner" id="scanner" hidden><video id="cam" playsinline muted></video>' +
-      '<div class="scan-box" aria-hidden="true"><i></i><i></i><i></i><i></i></div><span class="focus-ring" id="ring" aria-hidden="true"></span>' +
+      '<div class="scan-box" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="scan-line"></span>' +
+      '<span class="scan-ok"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div><span class="focus-ring" id="ring" aria-hidden="true"></span>' +
       '<p class="scan-tip">' + esc(t('scan_box')) + '</p>' +
       '<div class="scan-tools"><button type="button" class="scan-btn" id="torch" hidden aria-pressed="false" aria-label="' + esc(t('scan_torch')) + '">🔦</button>' +
       '<label class="scan-zoom" id="zoomwrap" hidden><span aria-hidden="true">🔍</span><input id="zoom" type="range" aria-label="' + esc(t('scan_zoom')) + '"></label>' +
@@ -118,6 +119,17 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
     if (!m) return null;
     try { var u = new URL(text, location.href); return u.origin === location.origin ? u.pathname : null; } catch (e) { return null; }
   }
+  function scanFeedback(ac) {   // a short buzz and a soft two-note chime, like payment apps
+    try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
+    if (!ac) return;
+    try {
+      if (ac.state === 'suspended' && ac.resume) ac.resume();
+      var now = ac.currentTime, g = ac.createGain();
+      g.connect(ac.destination);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.09, now + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+      [[880, 0], [1320, 0.09]].forEach(function (n) { var o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = n[0]; o.connect(g); o.start(now + n[1]); o.stop(now + n[1] + 0.17); });
+    } catch (e) {}
+  }
   function openScanned(text, msg, stop) {
     var path = badgePath(text);
     if (path) { if (stop) stop(); history.pushState({}, '', path); route(); return true; }
@@ -135,8 +147,12 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
     var msg = document.getElementById('scanmsg'), video = document.getElementById('cam'), box = document.getElementById('scanner');
     // no live camera here (plain http, old browser): go straight to the phone's own camera, still inside this tap
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.isSecureContext) { msg.textContent = t('scan_photo_hint'); document.getElementById('photo').click(); return; }
-    var det = 'BarcodeDetector' in window ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
-    var canvas = document.createElement('canvas'), frame = 0, lastBad = '', stopped = false;
+    var det = null;
+    try { if (typeof window.BarcodeDetector === 'function') det = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { det = null; }   // else our own reader
+    var canvas = document.createElement('canvas'), frame = 0, lastBad = '', stopped = false, done = false, badTimer = 0;
+    var ac = null;   // made inside this tap, so phones (iPhone too) allow the short success sound later
+    try { var AC = window.AudioContext || window.webkitAudioContext; if (AC) ac = new AC(); } catch (e) { ac = null; }
+    box.classList.remove('ok', 'bad');
     msg.textContent = '';
     navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] } }).then(function (stream) {
       var track = stream.getVideoTracks()[0], caps = {};
@@ -167,8 +183,16 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
         track.applyConstraints({ advanced: [adv] }).catch(function () { track.applyConstraints({ advanced: [{ focusMode: adv.focusMode || 'continuous' }] }).catch(function () {}); });
       };
       var found = function (text) {
-        if (badgePath(text)) { openScanned(text, msg, stop); return true; }
+        if (badgePath(text)) {
+          if (done) return true;
+          done = true;                                   // stop reading frames; show the success moment, then open the card
+          box.classList.remove('bad'); box.classList.add('ok'); msg.textContent = t('scan_ok');
+          scanFeedback(ac);
+          setTimeout(function () { openScanned(text, msg, stop); }, 520);
+          return true;
+        }
         if (text !== lastBad) { lastBad = text; msg.textContent = t('scan_not_badge'); }
+        box.classList.add('bad'); clearTimeout(badTimer); badTimer = setTimeout(function () { box.classList.remove('bad'); }, 900);
         return false;
       };
       // the part of the camera picture that sits inside the on-screen box (video uses object-fit: cover)
@@ -179,7 +203,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
         return { x: (vw - side) / 2, y: (vh - side) / 2, s: side };
       };
       var tick = function () {
-        if (stopped) return;
+        if (stopped || done) return;
         if (!document.body.contains(video)) return stop();
         if (video.readyState < 2) return setTimeout(tick, 120);
         if (det) {
@@ -451,7 +475,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       '<h2>' + esc(t('set_language')) + '</h2><div class="seg" role="group" aria-label="' + esc(t('set_language')) + '">' +
       [['bn', 'বাংলা'], ['hi', 'हिंदी'], ['en', 'English']].map(function (l) { return '<button data-setlang="' + l[0] + '" lang="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '">' + l[1] + '</button>'; }).join('') + '</div>' +
       '<h2>' + esc(t('set_display')) + '</h2><div class="list">' + sw('lg', large, 'large_text') + sw('hc', con, 'high_contrast') + '</div>' +
-      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.15.2</span>' +
+      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.16</span>' +
       '<p class="muted small" style="margin:8px 0 0">' + esc(t('about_sample')) + '</p></div></div>');
     document.getElementById('lg').addEventListener('click', function () { store('db_large', large ? '0' : '1'); applyPrefs(); settings(); });
     document.getElementById('hc').addEventListener('click', function () { store('db_contrast', con ? '0' : '1'); applyPrefs(); settings(); });

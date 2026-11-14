@@ -108,6 +108,12 @@ Full steps in Bengali: [`docs/GO_LIVE_bn.md`](docs/GO_LIVE_bn.md). Never commit 
 
 ## Changelog
 
+**v0.16 (14 Nov 2026), a scanner that feels like a payment app**
+- A soft green scan line sweeps up and down inside the scan box while the camera looks for a badge.
+- When a badge is read: the corners turn green, a large ✓ appears, the phone gives a short buzz and a soft two-note chime,
+  and the card opens half a second later. A QR that is not a DevBhumi badge makes the box flash orange-red for a moment.
+- With "reduce motion" switched on in the phone, the line stays still. Works with the phone's own QR reader (Android) and with ours (iPhone).
+
 **v0.15.2 (14 Nov 2026), correct WBTDC address**
 - The official-sites card and "Check before you pay" now use the working WBTDCL booking portal, `wbtdcl.wb.gov.in`
   (the old `wbtdc.gov.in` no longer opens). Look-alike addresses containing "wbtdc" are still flagged.
