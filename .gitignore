@@ -1,0 +1,17 @@
+# local databases and test certificates: never commit
+*.db
+*.sqlite3
+backend/certs/
+*.pem
+# secrets
+.env
+.env.*
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+# os
+.DS_Store
+Thumbs.db

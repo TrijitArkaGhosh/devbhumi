@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F5C4A">
+<meta name="color-scheme" content="only light">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DevBhumi">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="DevBhumi: scan a Bharosa QR badge to see a verified provider's own price, rating and last in-person check.">
+<title>DevBhumi · Bharosa QR</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+<header class="top">
+  <a class="brand" href="/" aria-label="DevBhumi home">
+    <span class="brand-name">DevBhumi</span>
+    <span class="brand-tag" data-i18n="tag">Every Journey is a Blessing</span>
+  </a>
+  <div class="langs" role="group" aria-label="Language">
+    <button type="button" data-lang="hi" lang="hi">हि</button>
+    <button type="button" data-lang="bn" lang="bn">বা</button>
+    <button type="button" data-lang="en" lang="en">EN</button>
+  </div>
+</header>
+<main id="main" tabindex="-1" aria-live="polite"></main>
+<p class="disclaimer" data-i18n="disclaimer">Independent student initiative, not a government service.</p>
+<nav class="bottom" aria-label="Main">
+  <a href="#/" data-nav="home"><span data-i18n="nav_home">Home</span></a>
+  <a href="#/find" data-nav="find"><span data-i18n="nav_find">Find</span></a>
+  <a href="#/verify" data-nav="verify"><span data-i18n="nav_verify">Check link</span></a>
+  <a href="#/settings" data-nav="settings"><span data-i18n="nav_settings">Settings</span></a>
+  <a class="sos" href="tel:112" aria-label="Call 112 emergency">112</a>
+</nav>
+<noscript>DevBhumi needs JavaScript. In an emergency call 112.</noscript>
+<script src="/i18n.js"></script>
+<script src="/i18n_v3.js"></script>
+<script src="/qr.js"></script>
+<script src="/qrscan.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
