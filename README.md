@@ -108,6 +108,11 @@ Full steps in Bengali: [`docs/GO_LIVE_bn.md`](docs/GO_LIVE_bn.md). Never commit 
 
 ## Changelog
 
+**v0.17 (14 Nov 2026), the photo route looks like the live scanner (phones only)**
+- After "Take a photo instead", the photo just taken appears in the scan box with the same moving green line while it is read,
+  then the green ✓, buzz and chime, and the card opens. A wrong QR or a blurred photo turns the corners red, says why, and offers "Take the photo again".
+- The line now moves by transform, so it keeps moving smoothly while the photo is being read. Computers keep the old, quiet behaviour.
+
 **v0.16 (14 Nov 2026), a scanner that feels like a payment app**
 - A soft green scan line sweeps up and down inside the scan box while the camera looks for a badge.
 - When a badge is read: the corners turn green, a large ✓ appears, the phone gives a short buzz and a soft two-note chime,

@@ -242,3 +242,13 @@
   var X = { en: { scan_ok: 'Badge found. Opening the card…' }, hi: { scan_ok: 'बैज मिल गया। कार्ड खुल रहा है…' }, bn: { scan_ok: 'ব্যাজ পাওয়া গেছে। কার্ড খুলছে…' } };
   Object.keys(X).forEach(function (l) { Object.keys(X[l]).forEach(function (k) { I18N[l][k] = X[l][k]; }); });
 })();
+
+/* v0.17: the photo route shows the same scanner. */
+(function () {
+  var X = {
+    en: { scan_retake: 'Take the photo again', scan_not_badge_short: 'Not a DevBhumi badge', scan_none_short: 'No badge found in the photo' },
+    hi: { scan_retake: 'फिर से फ़ोटो लें', scan_not_badge_short: 'यह देवभूमि बैज नहीं है', scan_none_short: 'फ़ोटो में बैज नहीं मिला' },
+    bn: { scan_retake: 'আবার ছবি তুলুন', scan_not_badge_short: 'এটা দেবভূমি ব্যাজ নয়', scan_none_short: 'ছবিতে ব্যাজ পাওয়া যায়নি' }
+  };
+  Object.keys(X).forEach(function (l) { Object.keys(X[l]).forEach(function (k) { I18N[l][k] = X[l][k]; }); });
+})();

@@ -94,10 +94,10 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       '<p class="hero-hint">' + esc(t('scan_alt_q')) + ' <label class="hero-alt" for="photo">' + icon('photo', 16) + esc(t('scan_alt')) + '</label></p>' +
       '<ul class="hero-points"><li>' + esc(t('hero_p1')) + '</li><li>' + esc(t('hero_p2')) + '</li><li>' + esc(t('hero_p3')) + '</li></ul></section>' +
       '<p class="muted small" id="scanmsg" aria-live="polite"></p>' +
-      '<div class="scanner" id="scanner" hidden><video id="cam" playsinline muted></video>' +
-      '<div class="scan-box" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="scan-line"></span>' +
+      '<div class="scanner" id="scanner" hidden><video id="cam" playsinline muted></video><img class="shot" id="shot" alt="" hidden>' +
+      '<div class="scan-box" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="scan-sweep"><span class="scan-line"></span></span>' +
       '<span class="scan-ok"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div><span class="focus-ring" id="ring" aria-hidden="true"></span>' +
-      '<p class="scan-tip">' + esc(t('scan_box')) + '</p>' +
+      '<p class="scan-tip" id="scantip">' + esc(t('scan_box')) + '</p>' +
       '<div class="scan-tools"><button type="button" class="scan-btn" id="torch" hidden aria-pressed="false" aria-label="' + esc(t('scan_torch')) + '">🔦</button>' +
       '<label class="scan-zoom" id="zoomwrap" hidden><span aria-hidden="true">🔍</span><input id="zoom" type="range" aria-label="' + esc(t('scan_zoom')) + '"></label>' +
       '<button type="button" class="scan-btn" id="scanclose" aria-label="' + esc(t('scan_close')) + '">✕</button></div></div>' +
@@ -110,8 +110,13 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
         return '<a class="item" href="#' + x[0] + '"><span><span aria-hidden="true">' + x[2] + '</span> <strong>' + esc(t(x[1])) + '</strong></span><span aria-hidden="true">›</span></a>'; }).join('') + '</div>' +
       '<p class="muted small" style="margin-top:16px">' + esc(t('no_otp')) + '</p>');
     document.getElementById('scan').addEventListener('click', startScan);
-    document.getElementById('photo').addEventListener('change', function (e) { scanPhoto(e.target.files && e.target.files[0]); e.target.value = ''; });
+    var ph = document.getElementById('photo');
+    ph.addEventListener('click', function () { photoAC = photoAC || newAudio(); });   // inside the tap, so the success sound may play later
+    ph.addEventListener('change', function (e) { scanPhoto(e.target.files && e.target.files[0]); e.target.value = ''; });
   }
+  var photoAC = null, liveStop = null, lastShot = null;
+  function newAudio() { try { var AC = window.AudioContext || window.webkitAudioContext; return AC ? new AC() : null; } catch (e) { return null; } }
+  function isPhone() { try { return window.matchMedia('(pointer: coarse)').matches; } catch (e) { return 'ontouchstart' in window; } }
 
   // ---------- scanning: built-in BarcodeDetector where it exists (Android Chrome), our own reader elsewhere (iPhone, Firefox)
   function badgePath(text) {
@@ -150,16 +155,18 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
     var det = null;
     try { if (typeof window.BarcodeDetector === 'function') det = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { det = null; }   // else our own reader
     var canvas = document.createElement('canvas'), frame = 0, lastBad = '', stopped = false, done = false, badTimer = 0;
-    var ac = null;   // made inside this tap, so phones (iPhone too) allow the short success sound later
-    try { var AC = window.AudioContext || window.webkitAudioContext; if (AC) ac = new AC(); } catch (e) { ac = null; }
-    box.classList.remove('ok', 'bad');
+    var ac = newAudio();   // made inside this tap, so phones (iPhone too) allow the short success sound later
+    box.classList.remove('ok', 'bad', 'photo');
+    document.getElementById('shot').hidden = true; video.hidden = false;
+    document.getElementById('scantip').textContent = t('scan_box');
     msg.textContent = '';
     navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] } }).then(function (stream) {
       var track = stream.getVideoTracks()[0], caps = {};
       try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) { caps = {}; }
       box.hidden = false; video.srcObject = stream; video.play();
       box.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      var stop = function () { if (stopped) return; stopped = true; stream.getTracks().forEach(function (tr) { tr.stop(); }); box.hidden = true; };
+      var stop = function () { if (stopped) return; stopped = true; liveStop = null; stream.getTracks().forEach(function (tr) { tr.stop(); }); box.hidden = true; };
+      liveStop = stop;
       document.getElementById('scanclose').onclick = stop;
       // zoom (where the phone allows it): start a little zoomed in, because badges are small
       if (caps.zoom && caps.zoom.max > caps.zoom.min) {
@@ -235,9 +242,21 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
   function scanPhoto(file) {
     var msg = document.getElementById('scanmsg');
     if (!file) return;
+    if (liveStop) liveStop();
     msg.textContent = t('scan_reading');
-    var img = new Image(), url = URL.createObjectURL(file);
+    var img = new Image(), url = URL.createObjectURL(file), show = isPhone(), t0 = Date.now();
+    var box = document.getElementById('scanner'), shot = document.getElementById('shot'), done = false;
+    if (lastShot) { try { URL.revokeObjectURL(lastShot); } catch (e) {} } lastShot = url;   // the previous photo, if retaken
+    var close = function () { done = true; box.hidden = true; box.classList.remove('photo', 'ok', 'bad'); shot.removeAttribute('src'); shot.hidden = true; URL.revokeObjectURL(url); lastShot = null; };
     img.onload = function () {
+      if (show) {   // phones: the photo just taken, with the same moving scan line while it is read
+        box.classList.remove('ok', 'bad'); box.classList.add('photo');
+        document.getElementById('cam').hidden = true; ['torch', 'zoomwrap'].forEach(function (id) { document.getElementById(id).hidden = true; });
+        document.getElementById('scantip').textContent = t('scan_reading');
+        shot.src = url; shot.hidden = false; box.hidden = false;
+        document.getElementById('scanclose').onclick = close;
+        box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
       var canvas = document.createElement('canvas'), text = null, W = img.naturalWidth, H = img.naturalHeight;
       var crop = function (f, side) {   // middle part of the photo, f = share of the shorter side
         var s = Math.min(W, H) * f, k = Math.min(1, side / s);
@@ -248,17 +267,36 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       };
       var tries = [function () { return crop(0.5, 1100); }, function () { return crop(0.8, 1400); },
         function () { return frameData(img, W, H, 1600, canvas); }, function () { return frameData(img, W, H, 2400, canvas); }];
-      tries.some(function (get) {
-        try { text = QRScan.decodeImageData(get(), { budgetMs: 1500 }); } catch (e) { text = null; }
-        return !!text;
-      });
-      URL.revokeObjectURL(url);
-      if (!text) { msg.textContent = t('scan_none'); return; }
-      openScanned(text, msg);
+      var finish = function () {
+        if (done) return;
+        if (!show) { URL.revokeObjectURL(url); lastShot = null; if (!text) { msg.textContent = t('scan_none'); return; } openScanned(text, msg); return; }
+        var retake = '<label class="btn green fallback-btn" for="photo">' + icon('photo', 22) + esc(t('scan_retake')) + '</label>';
+        if (text && badgePath(text)) {
+          box.classList.add('ok'); msg.textContent = t('scan_ok'); document.getElementById('scantip').textContent = t('scan_ok');
+          scanFeedback(photoAC);
+          setTimeout(function () { if (!done) openScanned(text, msg, close); }, 520);
+          return;
+        }
+        box.classList.add('bad');
+        var why = text ? t('scan_not_badge') : t('scan_none');
+        document.getElementById('scantip').textContent = text ? t('scan_not_badge_short') : t('scan_none_short');
+        msg.innerHTML = '<span class="fallback-note">' + esc(why) + '</span>' + retake;
+      };
+      var i = 0;
+      var step = function () {   // one try at a time, so the screen can draw the line between tries
+        if (done) return;
+        if (i < tries.length && !text) {
+          try { text = QRScan.decodeImageData(tries[i](), { budgetMs: 1500 }); } catch (e) { text = null; }
+          i++; return setTimeout(step, 16);
+        }
+        setTimeout(finish, show ? Math.max(0, 850 - (Date.now() - t0)) : 0);   // let the line be seen for a moment
+      };
+      setTimeout(step, show ? 120 : 0);   // first let the photo and the line appear
     };
     img.onerror = function () { URL.revokeObjectURL(url); msg.textContent = t('scan_none'); };
     img.src = url;
   }
+
 
   function cardScreen(token) {
     loading();
@@ -475,7 +513,7 @@ if (window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach =
       '<h2>' + esc(t('set_language')) + '</h2><div class="seg" role="group" aria-label="' + esc(t('set_language')) + '">' +
       [['bn', 'বাংলা'], ['hi', 'हिंदी'], ['en', 'English']].map(function (l) { return '<button data-setlang="' + l[0] + '" lang="' + l[0] + '" aria-pressed="' + (S.lang === l[0]) + '">' + l[1] + '</button>'; }).join('') + '</div>' +
       '<h2>' + esc(t('set_display')) + '</h2><div class="list">' + sw('lg', large, 'large_text') + sw('hc', con, 'high_contrast') + '</div>' +
-      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.16</span>' +
+      '<h2>' + esc(t('set_about')) + '</h2><div class="card"><div class="pad"><strong>DevBhumi · Bharosa QR</strong> <span class="sample">v0.17</span>' +
       '<p class="muted small" style="margin:8px 0 0">' + esc(t('about_sample')) + '</p></div></div>');
     document.getElementById('lg').addEventListener('click', function () { store('db_large', large ? '0' : '1'); applyPrefs(); settings(); });
     document.getElementById('hc').addEventListener('click', function () { store('db_contrast', con ? '0' : '1'); applyPrefs(); settings(); });
