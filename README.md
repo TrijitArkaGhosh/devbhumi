@@ -108,6 +108,10 @@ Full steps in Bengali: [`docs/GO_LIVE_bn.md`](docs/GO_LIVE_bn.md). Never commit 
 
 ## Changelog
 
+**v0.14.1 (14 Nov 2026), live on Render**
+- Live at https://devbhumi-74mh.onrender.com (Render free plan, kept awake by a 10-minute ping to `/healthz`).
+- Fix: links in WhatsApp replies now use the live https address (from `DEVBHUMI_BASE_URL`, or `X-Forwarded-Proto` behind the host's proxy) instead of `http://`.
+
 **v0.14 (14 Nov 2026), ready to go live**
 - `render.yaml`: one free Render web service running the zero-install server; Render generates every secret on first deploy.
 - `/healthz` for the health check and a keep-awake ping (cron-job.org or UptimeRobot every 10 minutes), so the free site never sleeps.

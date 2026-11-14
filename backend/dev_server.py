@@ -23,13 +23,25 @@ WA_NUMBER = os.environ.get("DEVBHUMI_WA_NUMBER", "")
 # Live site: set DEVBHUMI_DEMO_HINTS=0 so the sign-in screens stop showing the demo codes.
 DEMO_HINTS = os.environ.get("DEVBHUMI_DEMO_HINTS", "1") != "0"
 INTERPRETER_PHONE = os.environ.get("DEVBHUMI_INTERPRETER_PHONE", "")
-VERSION = "0.14.0"
+VERSION = "0.14.1"
 
 
 def make_app(con):
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
+
+        def _public_base(self):
+            """Address for links in replies: the configured live address, else the one the visitor used (https behind a proxy)."""
+            if os.environ.get("DEVBHUMI_BASE_URL"):
+                return os.environ["DEVBHUMI_BASE_URL"].rstrip("/")
+            host = re.sub(r"[^A-Za-z0-9.:\-\[\]]", "", self.headers.get("Host") or "")
+            if not host:
+                return None
+            proto = (self.headers.get("X-Forwarded-Proto") or "").split(",")[0].strip().lower()
+            if proto not in ("http", "https"):
+                proto = "https" if getattr(self.server, "is_https", False) else "http"
+            return f"{proto}://{host}"
 
         def _send(self, code, body, ctype="application/json; charset=utf-8"):
             data = body if isinstance(body, bytes) else json.dumps(body, ensure_ascii=False).encode()
@@ -141,9 +153,8 @@ def make_app(con):
                 return self._json(core.report_fake(con, b.get("code_seen", ""), b.get("text", ""), "web"))
             if p == "/api/wa/simulate":
                 sender = str(b.get("from") or "web-simulator")[:64]
-                host = re.sub(r"[^A-Za-z0-9.:\-\[\]]", "", self.headers.get("Host") or "")   # links point back to the address the visitor used
                 return self._json({"replies": whatsapp.handle(con, "sim:" + sender, str(b.get("text", ""))[:2000], b.get("kind", "text"),
-                                                              f"http://{host}" if host else None)})
+                                                              self._public_base())})
             if p == "/webhook/whatsapp":
                 if not whatsapp.check_signature(os.environ.get("WHATSAPP_APP_SECRET", ""), self._raw, self.headers.get("X-Hub-Signature-256")):
                     return self._send(401, {"detail": "bad_signature"})
